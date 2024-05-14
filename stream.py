@@ -46,7 +46,7 @@ def text_to_speech(output_language, text):
 
     return trans_text
 
-st.title('Image Classifier')
+st.title('WHAT DO YOU WANT TO KNOW?')
 
 # Set input language to English by default
 input_language = "en"
