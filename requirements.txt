@@ -1,6 +1,6 @@
 streamlit
 pyttsx3
-googletrans
+googletrans==4.0.0-rc1
 tensorflow
 Pillow
 numpy
