@@ -1,0 +1,7 @@
+streamlit
+pyttsx3
+googletrans
+tensorflow
+Pillow
+numpy
+opencv-python-headless
