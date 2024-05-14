@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 from io import BytesIO
 import pyttsx3
+from gtts import gTTS
 from googletrans import Translator
 import cv2
 
@@ -30,38 +31,28 @@ def predict_image(image):
     confidence = float(predictions[0][predicted_class_index])
     return predicted_class, confidence
 
-import pyttsx3
-from googletrans import Translator
-
 def text_to_speech(output_language, text):
     try:
-        # Debugging: Print initialization message
-        print("Initializing pyttsx3...")
+        # Translate text to the desired language
+        translator = Translator()
+        translated_text = translator.translate(text, dest=output_language).text
+
+        # Convert translated text to speech using gTTS
+        tts = gTTS(text=translated_text, lang=output_language)
         
-        # Try initializing with different drivers
-        engine = pyttsx3.init()
+        # Save the speech as an audio file
+        tts.save("output.mp3")
         
-        # Debugging: Print initialization success message
-        print("pyttsx3 initialized successfully.")
+        # Play the audio file
+        os.system("mpg123 output.mp3")  # You may need to adjust this command based on the audio player available in your environment
+
+        return translated_text
 
     except Exception as e:
-        # Debugging: Print initialization error message
-        print("Error initializing pyttsx3:", str(e))
+        # Print any error that occurs during initialization or execution
+        print("Error:", e)
         return None
 
-    translator = Translator()
-    translation = translator.translate(text, dest=output_language)
-    trans_text = translation.text
-
-    # Print translated text to check if it's correct
-    print("Translated text:", trans_text)
-    
-    engine.setProperty('rate', 110)  # You can adjust the speaking rate (words per minute)
-    engine.setProperty('driverName', 'espeak')  # Set the driver to espeak
-    engine.say(text)
-    engine.runAndWait()
-
-    return trans_text
 
 
 
