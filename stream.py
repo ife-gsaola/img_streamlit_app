@@ -30,7 +30,25 @@ def predict_image(image):
     confidence = float(predictions[0][predicted_class_index])
     return predicted_class, confidence
 
+import pyttsx3
+from googletrans import Translator
+
 def text_to_speech(output_language, text):
+    try:
+        # Debugging: Print initialization message
+        print("Initializing pyttsx3...")
+        
+        # Try initializing with different drivers
+        engine = pyttsx3.init()
+        
+        # Debugging: Print initialization success message
+        print("pyttsx3 initialized successfully.")
+
+    except Exception as e:
+        # Debugging: Print initialization error message
+        print("Error initializing pyttsx3:", str(e))
+        return None
+
     translator = Translator()
     translation = translator.translate(text, dest=output_language)
     trans_text = translation.text
@@ -38,12 +56,14 @@ def text_to_speech(output_language, text):
     # Print translated text to check if it's correct
     print("Translated text:", trans_text)
     
-    engine = pyttsx3.init()
     engine.setProperty('rate', 110)  # You can adjust the speaking rate (words per minute)
+    engine.setProperty('driverName', 'espeak')  # Set the driver to espeak
     engine.say(text)
     engine.runAndWait()
 
     return trans_text
+
+
 
 st.title('Image Classifier')
 
