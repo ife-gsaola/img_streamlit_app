@@ -3,7 +3,6 @@ from PIL import Image
 import tensorflow as tf
 import numpy as np
 from io import BytesIO
-import pyttsx3
 from gtts import gTTS
 from googletrans import Translator
 import cv2
@@ -32,29 +31,20 @@ def predict_image(image):
     return predicted_class, confidence
 
 def text_to_speech(output_language, text):
-    try:
-        # Translate text to the desired language
-        translator = Translator()
-        translated_text = translator.translate(text, dest=output_language).text
+    translator = Translator()
+    translation = translator.translate(text, dest=output_language)
+    trans_text = translation.text
 
-        # Convert translated text to speech using gTTS
-        tts = gTTS(text=translated_text, lang=output_language)
-        
-        # Save the speech as an audio file
-        tts.save("output.mp3")
-        
-        # Play the audio file
-        os.system("mpg123 output.mp3")  # You may need to adjust this command based on the audio player available in your environment
+    # Print translated text to check if it's correct
+    print("Translated text:", trans_text)
+    
+    if text:
+        sound_file = BytesIO()
+        tts = gTTS(trans_text, lang='en')
+        tts.write_to_fp(sound_file)
+        st.audio(sound_file, format='audio/mp3', start_time=0, autoplay=True)
 
-        return translated_text
-
-    except Exception as e:
-        # Print any error that occurs during initialization or execution
-        print("Error:", e)
-        return None
-
-
-
+    return trans_text
 
 st.title('Image Classifier')
 
