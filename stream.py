@@ -12,39 +12,55 @@ class_names = ["7 DAY's CROISSANT WITH OREO CREAM FILLING", "7 DAY's CROISSANT W
 
 # Load trained model
 MODEL_PATH = "PROJECT4.h5"
-model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+try:
+    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+except Exception as e:
+    st.error(f"Error loading the model: {e}")
 
 def preprocess_image(image):
-    # Preprocess the image
-    image = image.resize((64, 64))  # Resize image to match model input shape
-    image_array = tf.keras.preprocessing.image.img_to_array(image)
-    image_array = tf.keras.applications.mobilenet_v2.preprocess_input(image_array)
-    image_array = np.expand_dims(image_array, axis=0)
-    return image_array
+    try:
+        # Preprocess the image
+        image = image.resize((64, 64))  # Resize image to match model input shape
+        image_array = tf.keras.preprocessing.image.img_to_array(image)
+        # image_array = tf.keras.applications.mobilenet_v2.preprocess_input(image_array)
+        image_array = np.expand_dims(image_array, axis=0)
+        return image_array
+    except Exception as e:
+        st.error(f"Error preprocessing the image: {e}")
+        return None
+
 
 def predict_image(image):
-    image_array = preprocess_image(image)
-    predictions = model.predict(image_array)
-    predicted_class_index = np.argmax(predictions)
-    predicted_class = class_names[predicted_class_index]
-    confidence = float(predictions[0][predicted_class_index])
-    return predicted_class, confidence
+    try:
+        image_array = preprocess_image(image)
+        predictions = model.predict(image_array)
+        predicted_class_index = np.argmax(predictions)
+        predicted_class = class_names[predicted_class_index]
+        confidence = float(predictions[0][predicted_class_index])
+        return predicted_class, confidence
+    except Exception as e:
+        st.error(f"Error predicting the image: {e}")
+        return None, None    
 
 def text_to_speech(output_language, text):
-    translator = Translator()
-    translation = translator.translate(text, dest=output_language)
-    trans_text = translation.text
+    try:
+        translator = Translator()
+        translation = translator.translate(text, dest=output_language)
+        trans_text = translation.text
 
-    # Print translated text to check if it's correct
-    print("Translated text:", trans_text)
-    
-    if text:
-        sound_file = BytesIO()
-        tts = gTTS(trans_text, lang='en')
-        tts.write_to_fp(sound_file)
-        st.audio(sound_file, format='audio/mp3', start_time=0, autoplay=True)
+        # Print translated text to check if it's correct
+        print("Translated text:", trans_text)
+        
+        if text:
+            sound_file = BytesIO()
+            tts = gTTS(trans_text, lang='en')
+            tts.write_to_fp(sound_file)
+            st.audio(sound_file, format='audio/mp3', start_time=0, autoplay=True)
 
-    return trans_text
+        return trans_text
+    except Exception as e:
+        st.error(f"Error converting text to speech: {e}")
+        return None
 
 st.title('WHAT DO YOU WANT TO KNOW?')
 
@@ -54,7 +70,7 @@ input_language = "en"
 # Language selection for output
 out_lang = st.selectbox(
     "Select your output language",
-    ("English", "Hindi", "Bengali", "Korean", "Chinese", "Japanese"),
+    ("English", "Hindi", "Bengali", "Korean", "Chinese", "Japanese", "Swahili"),
 )
 
 if out_lang == "English":
@@ -69,35 +85,17 @@ elif out_lang == "Chinese":
     output_language = "zh-cn"
 elif out_lang == "Japanese":
     output_language = "ja"
+elif out_lang == "Swahili":
+    output_language = "sw"
 
 option = st.radio("Choose an option", ("Upload Image", "Take Picture"))
 
 if option == "Upload Image":
     uploaded_image = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
     if uploaded_image is not None:
-        image = Image.open(uploaded_image)
-        st.image(image, caption='Uploaded Image.', use_column_width=True)
-        st.write("")
-        st.write("Classifying...")
-
-        predicted_class, confidence = predict_image(image)
-
-        st.write(f"Prediction: {predicted_class}")
-        
-        # Translate and speak the prediction
-        translated_prediction = text_to_speech(output_language, predicted_class)
-        st.write("Translated Prediction:", translated_prediction)
-
-        if confidence < 0.6:
-            st.warning("Confidence is low.")
-elif option == "Take Picture":
-    img_file_buffer = st.camera_input("Take a picture")
-
-    if img_file_buffer is not None:
-        bytes_data = img_file_buffer.getvalue()
-        image = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
-        if image is not None:
-            image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        try:
+            image = Image.open(uploaded_image)
+            st.image(image, caption='Uploaded Image.', use_column_width=True)
             st.write("")
             st.write("Classifying...")
 
@@ -111,3 +109,32 @@ elif option == "Take Picture":
 
             if confidence < 0.6:
                 st.warning("Confidence is low.")
+        except Exception as e:
+            st.error(f"Error processing the uploaded image: {e}")
+
+
+elif option == "Take Picture":
+    img_file_buffer = st.camera_input("Take a picture")
+    if img_file_buffer is not None:
+        try:
+            bytes_data = img_file_buffer.getvalue()
+            image = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+            if image is not None:
+                # Flip the image horizontally to correct the mirror view
+                image = cv2.flip(image, 0)
+                image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+                st.write("")
+                st.write("Classifying...")
+
+                predicted_class, confidence = predict_image(image)
+
+                st.write(f"Prediction: {predicted_class}")
+                
+                # Translate and speak the prediction
+                translated_prediction = text_to_speech(output_language, predicted_class)
+                st.write("Translated Prediction:", translated_prediction)
+
+                if confidence < 0.6:
+                    st.warning("Confidence is low.")
+        except Exception as e:
+            st.error(f"Error processing the taken picture: {e}")
